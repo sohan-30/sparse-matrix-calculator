@@ -1,298 +1,269 @@
 # Sparse Matrix Calculator in C
 
-A comprehensive and feature-rich implementation of sparse matrix data structure in C using dual-linked lists with advanced matrix operations, management system, and interactive interface.
+An interactive, menu-driven sparse-matrix calculator written in C99 as a
+data-structures learning project. Only non-zero elements are stored, in a
+linked structure that can be walked by row or by column. Up to ten matrices
+(named `A`–`J`) can be held in memory at once.
 
-## Overview
+This is a single-file educational implementation with a small regression test
+suite. It is not a numerical library: see [Limitations](#limitations) before
+relying on it for anything beyond small examples.
 
-This project implements an advanced sparse matrix calculator optimized for matrices with a large number of zero elements. The implementation uses a sophisticated dual-linked list approach where each non-zero element is connected both horizontally (by row) and vertically (by column), enabling efficient operations across multiple matrices.
+## Features
 
-The calculator supports up to 10 named matrices (A-J) with a complete matrix management system, advanced mathematical operations including determinant calculation and matrix inversion, and multiple user interfaces for different use cases.
+Available from the interactive menus:
 
-## Key Features
+- Create a matrix with given dimensions and non-zero entries, resize it, insert
+  or update an element, delete an element, clear all of its elements.
+- Add, subtract and multiply matrices; multiply by a scalar; transpose.
+- Determinant and inverse (recursive cofactor expansion, so small matrices only).
+- Full view (zeros shown), sparse view (non-zero entries with coordinates),
+  dimensions only, and a list of all ten matrix slots.
+- After a binary operation or an inverse, the result is printed as `R` and you
+  are offered the chance to save it into any slot `A`–`J`.
 
-### Core Functionality
-- **Memory Efficient**: Only stores non-zero elements, dramatically reducing memory usage
-- **Dual Indexing**: Fast access by both rows and columns using separate linked lists
-- **Dynamic Sizing**: No predefined matrix size limitations with runtime resizing
-- **Named Matrix System**: Manage up to 10 matrices simultaneously (A-J)
-- **Robust Error Handling**: Comprehensive error checking and status codes
+Internal functions that are **not** exposed through the menus: `search` and
+`copyMatrix` (copying is only reachable through the "save result" prompt).
 
-### Advanced Operations
-- **Basic Operations**: Insert, delete, search, clear
-- **Matrix Arithmetic**: Addition, subtraction, multiplication
-- **Linear Algebra**: Transpose, determinant, matrix inverse
-- **Scalar Operations**: Scalar multiplication
-- **Matrix Management**: Create, resize, copy, clear matrices
+## Repository layout
 
-### User Interfaces
-- **Menu-Driven Interface**: Intuitive hierarchical menu system
-- **Command-Line Operations**: Express operations using simple commands
-- **Multiple Display Modes**: Full matrix view and sparse representation
-- **Interactive Matrix Builder**: Step-by-step matrix creation
-
----
-
-## Data Structure
-
-The sparse matrix uses three main node types:
-
-### Element Node (`Sm_Node`)
-Stores a non-zero value and links to neighbors in the same row and column.
-```c
-typedef struct Sm_Node_Tag {
-    float data;
-    int row, col;
-    struct Sm_Node_Tag* right;
-    struct Sm_Node_Tag* down;
-} Sm_Node;
+```text
+sparse_matrix_calculator.c   the whole implementation, including main()
+tests/test_regressions.c     regression tests (includes the .c file directly)
+Makefile                     build, test and sanitizer targets
 ```
 
-### Row Header Node (`Row_Node`)
-```c
-typedef struct Row_Node_Tag
-{
-    int row;                    // Row number
-    Sm_Node* rowlist;          // First element in this row
-    struct Row_Node_Tag* next; // Next row header
-} Row_Node;
-```
+## Build and run
 
-### Column Header Node (`Col_Node`)
-```c
-typedef struct Col_Node_Tag
-{
-    int col;                    // Column number
-    Sm_Node* collist;          // First element in this column
-    struct Col_Node_Tag* next; // Next column header
-} Col_Node;
-```
-### SparseMatrix Wrapper
-```c
-typedef struct SparseMatrix {
-    int rowCount, colCount;
-    Row_Node* rowHead;
-    Col_Node* colHead;
-} SparseMatrix;
-```
-### Registry for Matrix Storage
-```c
-typedef struct Named_Matrix_Tag {
-    char name;
-    SparseMatrix matrix;
-    boolean isOccupied;
-} NamedMatrix;
+Requires a C99 compiler and the math library. Tested with GCC 13.3 on Ubuntu.
 
-NamedMatrix registry[MAX_MATRICES];
-```
-
-## How It Works
-
-### Storage Strategy
-The sparse matrix maintains two separate linked lists:
-1. **Row Headers**: A linked list of row headers, each pointing to elements in that row
-2. **Column Headers**: A linked list of column headers, each pointing to elements in that column
-
-### Element Connectivity
-Each non-zero element is connected in two directions:
-- **Horizontally**: Connected to other elements in the same row via `right` pointers
-- **Vertically**: Connected to other elements in the same column via `down` pointers
-
-## Advanced Algorithms
-
-### Matrix Inversion Algorithm
-- **Cofactor Method**: Uses recursive determinant calculation
-- **Adjugate Matrix**: Computes transpose of cofactor matrix
-- **Singular Matrix Detection**: Handles non-invertible matrices gracefully
-- **Memory Optimization**: Efficient handling of intermediate calculations
-
-### Determinant Calculation
-- **Recursive Expansion**: Uses cofactor expansion along first row
-- **Submatrix Generation**: Dynamic creation of (n-1)×(n-1) submatrices
-- **Base Case Optimization**: Direct calculation for 1×1 matrices
-- **Sign Alternation**: Proper handling of cofactor signs
-
-### Smart Matrix Operations
-- **Dimension Validation**: Automatic compatibility checking
-- **Zero Handling**: Intelligent zero-element management
-- **Memory Management**: Automatic cleanup of temporary matrices
-- **Result Preservation**: Optional saving of operation results
-
-## Installation & Setup
-
-### Prerequisites
-- **GCC Compiler**: Version 4.8 or later
-- **Standard C Library**: Full C99 support required
-- **Memory**: Minimum 1MB RAM for typical operations
-
-### Compilation
 ```bash
-# Standard compilation
-gcc -o matrix_calculator sparse_matrix_github.c -lm
-
-# With debugging symbols
-gcc -g -o matrix_calculator sparse_matrix_github.c -lm
-
-# Optimized build
-gcc -O3 -o matrix_calculator sparse_matrix_github.c -lm
-```
-
-### Running the Program
-```bash
+make
 ./matrix_calculator
 ```
 
-## User Interface Guide
-
-### Main Menu Structure
-```
-===== MATRIX CALCULATOR =====
-1. Matrix Management        # Create, modify, manage matrices
-2. Matrix Operations        # Perform calculations using commands
-3. Display Options          # View and inspect matrices
-4. Exit                     # Clean shutdown
-```
-
-### Matrix Management Submenu
-- **Create Matrix**: Initialize new matrices with custom dimensions
-- **Resize Matrix**: Modify dimensions of existing matrices
-- **Insert/Update Element**: Add or modify individual elements
-- **Delete Element**: Remove specific elements
-- **Clear Matrix**: Reset matrix to empty state
-
-### Operation Command System
-Execute operations using natural language commands:
+Without Make:
 
 ```bash
-# Arithmetic Operations
-add A B              # A + B
-subtract A B         # A - B  
-multiply A B         # A × B
+gcc -std=c99 -Wall -Wextra -Wpedantic -o matrix_calculator sparse_matrix_calculator.c -lm
+```
 
-# Linear Algebra
-transpose A          # A^T
-determinant A        # det(A)
-inverse A           # A^(-1)
+With GCC 13.3, both the calculator and the test driver compile with no
+warnings under these flags.
 
-# Scalar Operations
-scalar A 2.5        # A × 2.5
+## Usage
 
-# Exit command mode
+The main menu has three areas: **Matrix Management** (create, resize,
+insert/update, delete, clear), **Matrix Operations** (command mode) and
+**Display Options**.
+
+### Conventions
+
+- Matrix names are single **uppercase** letters `A`–`J`.
+- Row and column indexes are **zero-based**.
+- Matrix dimensions must be non-negative; negative sizes are rejected when
+  creating or resizing.
+- Elements are `float` (`matrix_entry`). Printed values use two decimals.
+- Inserting at an existing coordinate updates the value.
+- Inserting `0` never creates a stored element and does **not** overwrite an
+  existing one. Use Delete Element to remove an entry.
+- `scalar A 0` removes every stored element. An element whose value becomes
+  exactly `0` after scalar multiplication (including by `float` underflow) is
+  also removed.
+
+### Input handling
+
+Every prompt reads one whole line. Text that is not a valid number (or has
+trailing characters) prints `Invalid numeric input.` and the prompt is shown
+again, and leftover input no longer leaks into the next prompt or into the
+first command. End of input exits the program cleanly.
+
+### Entering elements when creating a matrix
+
+The prompt reads all three values from one line. To store `1` at (0, 0), type:
+
+```text
+> 0 0 1
+```
+
+and type `-1` on a line by itself to finish. Entering `0 0 1` on one line is
+accepted. (The Insert/Update Element menu item uses separate prompts for row,
+column and value and is not affected.)
+
+### Command mode
+
+```text
+add A B
+subtract A B
+multiply A B
+transpose A
+determinant A
+inverse A
+scalar A 2.5
 exit
 ```
 
-### Display Options
-1. **List All Matrices**: Overview of all 10 matrix slots
-2. **Full View**: Complete matrix with zeros displayed
-3. **Sparse View**: Only non-zero elements with coordinates
-4. **Dimensions Only**: Quick size information
+- `add`, `subtract`, `multiply` and `inverse` print the result as matrix `R`
+  and ask whether to save it. They do not modify their operands.
+- `transpose A` and `scalar A <value>` **modify `A` in place**.
+- `determinant A` prints the value and changes nothing.
+- Addition and subtraction require equal dimensions; multiplication requires
+  `cols(left) == rows(right)`. This is checked even when an operand has no
+  stored elements; an empty-operand product has the correct
+  `rows(left) × cols(right)` size and no stored elements.
 
-## Usage Examples
+### Example
 
-### Creating and Populating a Matrix
-```
-Enter your choice: 1
-Enter your choice: 1
-Enter matrix name (A-J): A
-Enter number of rows: 3
-Enter number of columns: 3
-Matrix A created [3 x 3].
+Create `A` as a 2×2 matrix with entries 1, 2, 3, 4 (Matrix Management →
+Create Matrix, using the single-line entry format above), then in command mode:
 
-Enter non-zero elements (row col value), or -1 to finish:
-> 0 0 5.0
-> 0 2 2.0
-> 2 0 3.0
-> 2 2 1.0
-> -1
-Matrix A created and initialized.
+```text
+> Operation: determinant A
+Determinant of A = -2.00
+> Operation: inverse A
+Matrix R [2 x 2]
+ -2.00   1.00
+  1.50  -0.50
 ```
 
-### Matrix Operations via Commands
-```
-> Operation: add A B
-Matrix R [3 x 3]
-  8.00   0.00   2.00
-  0.00   0.00   0.00
-  3.00   0.00   6.00
+## How it works
 
-Do you want to save the resultant matrix before deleting? (y/n): y
-Enter a destination matrix name (A-J): C
-Matrix copied to 'C'
-```
+Each non-zero element is one node that sits in two sorted singly linked lists
+at once: its row's list (via `right`) and its column's list (via `down`).
+Row headers and column headers are themselves sorted linked lists, and a header
+exists only while its row or column has at least one element.
 
-### Matrix Display Modes
-**Sparse View:**
-```
-Matrix A [3 x 3]
-(0, 0) -> 5.00
-(0, 2) -> 2.00
-(2, 0) -> 3.00
-(2, 2) -> 1.00
+```text
+Non-zero elements: (0,1)  (0,4)  (2,1)
+
+row headers:  [row 0] -> (0,1) -> (0,4)     via right pointers
+              [row 2] -> (2,1)
+
+col headers:  [col 1] -> (0,1) -> (2,1)     via down pointers
+              [col 4] -> (0,4)
 ```
 
-**Full View:**
+```c
+typedef struct Sm_Node_Tag {
+    matrix_entry data;                 /* float */
+    int row, col;
+    struct Sm_Node_Tag *right, *down;  /* next in row, next in column */
+} Sm_Node;
 ```
-Matrix A [3 x 3]
-  5.00   0.00   2.00
-  0.00   0.00   0.00
-  3.00   0.00   1.00
+
+Design notes that follow from the code:
+
+- A node is shared between its row and column chains, so updating a value
+  touches one node, and deleting an element unlinks it from both chains.
+- Transpose reuses the existing element nodes: it swaps each node's
+  `row`/`col` and `right`/`down`, and rebuilds only the header lists.
+- Ten matrices live in a global registry (`NamedMatrix registry[10]`).
+
+### Memory
+
+On a 64-bit build, `sizeof(Sm_Node)` is 32 bytes, and each row or column header
+is 24 bytes. A dense `float` matrix costs 4 bytes per cell, so ignoring headers
+the sparse form only saves memory when fewer than roughly 1 in 8 cells is
+non-zero. This is a derived estimate, not a benchmark.
+
+### Time cost
+
+There is no hashing or random access; everything walks linked lists.
+
+- Insert, delete and search scan the row-header list, the column-header list,
+  and the target row/column chains.
+- Add, subtract and multiply traverse both operands, but build the result
+  through `insertElement`, so they cost more than linear in the number of
+  non-zeros.
+- Determinant and inverse grow **factorially** with matrix size. Measured on
+  one machine with an unoptimized build (`-O0`), dense determinant took about
+  0.02 s at 8×8, 0.19 s at 9×9 and 2.0 s at 10×10; dense inverse took about
+  0.19 s at 8×8. Sparse inputs are much cheaper because zero entries are skipped
+  (a 12×12 diagonal matrix is effectively instant). Treat these as rough
+  indications, not benchmarks.
+
+## Tests
+
+`tests/test_regressions.c` is deterministic and uses `assert`. It currently covers:
+
+- Shrinking a matrix with `resizeMatrix` keeps the right elements, drops the
+  rest, and leaves the row lists and column lists holding the same number of
+  elements; `clearMatrix` empties both header lists.
+- Fractional addition (`1.3 + 0.3`) and multiplication (`1.3 × 2.5`) to within 0.001.
+- Updating an existing element succeeds and changes the stored value.
+- Inverting a 1×1 matrix.
+- Negative and out-of-range coordinates are rejected by `insertElement`, and a
+  negative size passed to `resizeMatrix` is ignored.
+- Inserting `0` does not overwrite an existing value; scalar multiplication by
+  `0` empties both indexes.
+- Addition and multiplication reject mismatched dimensions even when an operand
+  is empty, and an empty-operand product has the expected dimensions.
+- Small diagonal matrices and mixed-scale diagonal matrices retain their
+  non-zero determinants and inverse cofactors.
+
+Not covered: delete, search, subtract, transpose, determinant or inverse beyond
+1×1, copy, command parsing, the input-reading helpers and interactive menus,
+and allocation failure.
+
+```bash
+make matrix_regressions
+./matrix_regressions
 ```
 
-## Advanced Features
+### Sanitizers
 
-### Dynamic Matrix Resizing
-- **Automatic Cleanup**: Removes out-of-bounds elements
-- **Dimension Expansion**: Allows growing matrix size
-- **Memory Optimization**: Efficient handling of size changes
+Build and run the same tests with AddressSanitizer and UndefinedBehaviorSanitizer:
 
-### Intelligent Operation Handling
-- **Result Management**: Optional saving of operation results
-- **Memory Cleanup**: Automatic deallocation of temporary matrices  
-- **Error Recovery**: Graceful handling of operation failures
+```bash
+make asan
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1 ./matrix_regressions_asan
+```
 
-### Matrix Registry System
-- **Named Access**: Reference matrices by single character (A-J)
-- **Occupancy Tracking**: Automatic management of available slots
-- **Overwrite Protection**: Warnings when overwriting existing matrices
+With GCC 13.3 on Ubuntu this completes with no sanitizer findings. That result
+applies to what the tests exercise, not to the whole program. On Windows, run
+these commands under WSL2.
 
-## Performance Analysis
+(The out-of-bounds message printed several times during the run comes from the
+invalid-coordinate tests and is expected.)
 
-### Time Complexity
-| Operation | Average Case | Worst Case | Space |
-|-----------|--------------|------------|-------|
-| Insert/Update | O(r + c) | O(r + c) | O(1) |
-| Delete | O(r + c) | O(r + c) | O(1) |
-| Search | O(c) | O(c) | O(1) |
-| Addition | O(n₁ + n₂) | O(n₁ + n₂) | O(n) |
-| Multiplication | O(n₁ × c₂) | O(n₁ × c₂) | O(n) |
-| Transpose | O(n) | O(n) | O(1) |
-| Determinant | O(n! × d) | O(n! × d) | O(n²) |
-| Inverse | O(n³ × d) | O(n³ × d) | O(n²) |
+## Changes from the original version
 
-**Legend:**
-- n = number of non-zero elements
-- r = rows with elements, c = columns in row  
-- n₁, n₂ = non-zero elements in operand matrices
-- c₂ = columns in second matrix
-- d = average density of submatrices
+Compared with the first version of this repository:
 
-### Memory Efficiency
-- **Storage Reduction**: For sparsity s%, memory usage ≈ (1-s) × dense storage
-- **Typical Savings**: 80-95% memory reduction for real-world sparse matrices
-- **Overhead**: ~24 bytes per non-zero element (on 64-bit systems)
+- Addition and multiplication accumulated results in an `int`, truncating
+  fractional values; they now use `float`.
+- Updating an existing element printed "Unexpected duplication" and returned
+  failure; it now succeeds.
+- `clearMatrix` and `resizeMatrix` read or freed nodes after they had been
+  deleted, and left column chains pointing at freed memory; they now save the
+  next pointer first and go through `deleteElement`.
+- Negative coordinates and sizes are rejected, node allocation is checked, and
+  1×1 inverse has an explicit case.
+- Add and multiply validate dimensions up front, including for empty operands.
+- Scalar multiplication removes elements that become zero instead of storing
+  zero-valued nodes.
+- Prompts read whole lines and validate numbers instead of using bare `scanf`.
+- Singularity is judged with a tolerance scaled to the product of the matrix
+  row magnitudes, and small non-zero cofactors are retained.
+- The build is now `-std=c99 -Wall -Wextra -Wpedantic` with a Makefile, tests
+  and sanitizer target, and compiles without warnings on GCC 13.3.
 
-## Error Handling & Robustness
+## Limitations
 
-### Input Validation
-- **Dimension Checking**: Validates row/column bounds
-- **Matrix Compatibility**: Ensures operation validity
-- **Memory Allocation**: Handles insufficient memory gracefully
+Behaviors confirmed by running the program:
 
-### Error Recovery
-- **Partial Operations**: Maintains consistency during failures
-- **Resource Cleanup**: Prevents memory leaks
-- **User Feedback**: Clear error messages and recovery suggestions
+- End of input exits the program cleanly.
+- Matrix creation accepts the documented single-line `row col value` format.
+- Singularity detection is scaled to the matrix magnitude, and non-zero
+  cofactors are not discarded merely because they are small. Results remain
+  subject to `float` precision and recursive cofactor-expansion limits.
+- Determinant and inverse become impractical beyond roughly 10×10 for dense
+  matrices (see [Time cost](#time-cost)). Results are subject to `float`
+  rounding.
 
-### Edge Cases
-- **Empty Matrices**: Proper handling of zero-element matrices
-- **Singular Matrices**: Graceful inverse calculation failures
-- **Dimension Mismatches**: Clear error reporting for incompatible operations
+From reading the code:
+
+- Allocation failures are handled in the node-creation and insert path, but not
+  uniformly across every operation, and that handling is untested.
+- There is a global registry of ten matrices, uppercase names only, and no file
+  input or output.
